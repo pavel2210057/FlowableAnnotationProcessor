@@ -15,7 +15,7 @@ You can omit annotating, in this case [Default Behavior](https://github.com/pave
 
 After compilation, generated classes appear.
 
-Generated classes have a name that consists of the original name and the "Flowable" prefix.
+Generated classes have a name that consists of the original name and the "Flowable" postfix.
 
 To get more info checkout [samples](https://github.com/pavel2210057/FlowableAnnotationProcessor/tree/main/app/src/main/java/me/flowable/app/samples).
 
