@@ -1,6 +1,6 @@
 package me.flowable.kapt.traverse.elementVisitor
 
-import me.flowable.kapt.traverse.Variable
+import me.flowable.core.internal.traverse.Variable
 import javax.lang.model.element.*
 
 abstract class BaseElementVariableVisitor : ElementVisitor<Variable?, Unit> {

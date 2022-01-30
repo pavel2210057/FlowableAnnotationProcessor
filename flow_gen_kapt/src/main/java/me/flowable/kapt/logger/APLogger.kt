@@ -1,5 +1,6 @@
 package me.flowable.kapt.logger
 
+import me.flowable.core.internal.logger.Logger
 import java.lang.ref.WeakReference
 import javax.annotation.processing.Messager
 import javax.tools.Diagnostic
@@ -24,7 +25,7 @@ object GlobalLogger : Logger {
 
 class APLogger(
     private val messager: Messager
-) : Logger  {
+) : Logger {
 
     override fun logInfo(message: String) {
         messager.printMessage(Diagnostic.Kind.NOTE, message)

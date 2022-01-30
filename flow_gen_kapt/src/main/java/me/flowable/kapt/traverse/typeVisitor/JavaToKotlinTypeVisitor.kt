@@ -1,7 +1,7 @@
 package me.flowable.kapt.traverse.typeVisitor
 
-import me.flowable.kapt.traverse.typeName.TypeName
-import me.flowable.kapt.traverse.typeName.ParameterizedTypeName
+import me.flowable.core.internal.traverse.typeName.TypeName
+import me.flowable.core.internal.traverse.typeName.ParameterizedTypeName
 import javax.lang.model.type.*
 
 class JavaToKotlinTypeVisitor : BaseTypeVisitor() {

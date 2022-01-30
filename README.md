@@ -22,4 +22,4 @@ To get more info checkout [samples](https://github.com/pavel2210057/FlowableAnno
 # How does it work?
 
 This processor generates **flowable classes** using the meta info of existing classes.
-At the moment, there's one implementation which uses kapt3 to provide Annotation Processing Api.
+You have two choices of using the library: whether with kapt3 or ksp.

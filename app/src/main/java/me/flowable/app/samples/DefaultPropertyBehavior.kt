@@ -1,6 +1,6 @@
 package me.flowable.app.samples
 
-import me.flowable.domain.annotation.Flowable
+import me.flowable.core.Flowable
 
 /**
  * will be generated following class:

@@ -1,10 +1,10 @@
 package me.flowable.kapt.traverse.elementVisitor
 
-import me.flowable.domain.annotation.Shared
-import me.flowable.domain.annotation.State
-import me.flowable.domain.annotation.Skip
-import me.flowable.kapt.traverse.Variable
-import me.flowable.kapt.traverse.typeName.TypeName
+import me.flowable.core.Shared
+import me.flowable.core.State
+import me.flowable.core.Skip
+import me.flowable.core.internal.traverse.Variable
+import me.flowable.core.internal.traverse.typeName.TypeName
 import me.flowable.kapt.traverse.typeVisitor.JavaToKotlinTypeVisitor
 import me.flowable.kapt.traverse.typeVisitor.accept
 import javax.lang.model.element.*

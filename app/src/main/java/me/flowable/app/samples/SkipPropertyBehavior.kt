@@ -1,7 +1,7 @@
 package me.flowable.app.samples
 
-import me.flowable.domain.annotation.Flowable
-import me.flowable.domain.annotation.Skip
+import me.flowable.core.Flowable
+import me.flowable.core.Skip
 
 /**
  * will be generated following class:

@@ -1,10 +1,10 @@
 package me.flowable.kapt
 
 import com.google.auto.service.AutoService
-import me.flowable.domain.annotation.Flowable
-import me.flowable.kapt.builder.FlowableSourceBuilder
+import me.flowable.core.Flowable
+import me.flowable.core.internal.builder.FlowableSourceBuilder
 import me.flowable.kapt.logger.GlobalLogger
-import me.flowable.kapt.traverse.ClassScheme
+import me.flowable.core.internal.traverse.ClassScheme
 import me.flowable.kapt.traverse.elementVisitor.ElementVariableVisitorImpl
 import me.flowable.kapt.traverse.elementVisitor.accept
 import javax.annotation.processing.*
@@ -14,7 +14,7 @@ import javax.lang.model.element.*
 @AutoService(Processor::class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedOptions("kapt.kotlin.generated")
-@SupportedAnnotationTypes("me.flowable.domain.annotation.Flowable")
+@SupportedAnnotationTypes("me.flowable.core.Flowable")
 class FlowableProcessor : AbstractProcessor() {
 
     private val elementVariableVisitor = ElementVariableVisitorImpl()
@@ -64,8 +64,8 @@ class FlowableProcessor : AbstractProcessor() {
         )
     }
 
-    private fun generateClass(classSchemeScheme: ClassScheme) {
-        val fileSpec = sourceBuilder.buildByClassScheme(classSchemeScheme)
+    private fun generateClass(classScheme: ClassScheme) {
+        val fileSpec = sourceBuilder.buildByClassScheme(classScheme)
         fileSpec.writeTo(processingEnv.filer)
     }
 }

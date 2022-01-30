@@ -1,7 +1,8 @@
 plugins {
     id("com.android.application")
     kotlin("android")
-    kotlin("kapt")
+//    kotlin("kapt")
+    id("com.google.devtools.ksp") version "1.5.31-1.0.0"
 }
 
 android {
@@ -45,7 +46,8 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.3.5")
     implementation("androidx.navigation:navigation-ui-ktx:2.3.5")
 
-    kapt(project(":flow_gen_kapt"))
+    ksp(project(":flow_gen_ksp"))
+//    kapt(project(":flow_gen_kapt"))
     implementation(project(":core"))
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0-RC3")

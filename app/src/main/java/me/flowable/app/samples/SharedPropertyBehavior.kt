@@ -1,8 +1,8 @@
 package me.flowable.app.samples
 
-import me.flowable.domain.annotation.Flowable
-import me.flowable.domain.annotation.OnBufferOverflow
-import me.flowable.domain.annotation.Shared
+import me.flowable.core.Flowable
+import me.flowable.core.OnBufferOverflowDef
+import me.flowable.core.Shared
 
 /**
  * will be generated following class:
@@ -30,7 +30,7 @@ data class SingleAdvancedSharedProperty(
     @Shared(
         replay = 5,
         extraBufferCapacity = 10,
-        onBufferOverflow = OnBufferOverflow.DROP_OLDEST
+        onBufferOverflow = OnBufferOverflowDef.DROP_OLDEST
     )
     val prop: String
 )

@@ -1,7 +1,7 @@
 package me.flowable.kapt.traverse.typeVisitor
 
 import me.flowable.kapt.logger.GlobalLogger
-import me.flowable.kapt.traverse.typeName.TypeName
+import me.flowable.core.internal.traverse.typeName.TypeName
 import javax.lang.model.type.*
 
 abstract class BaseTypeVisitor : TypeVisitor<TypeName, Unit> {
