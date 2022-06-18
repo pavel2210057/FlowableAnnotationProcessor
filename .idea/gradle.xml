@@ -18,7 +18,6 @@
             <option value="$PROJECT_DIR$/flow_gen_ksp" />
           </set>
         </option>
-        <option name="resolveModulePerSourceSet" value="false" />
       </GradleProjectSettings>
     </option>
   </component>

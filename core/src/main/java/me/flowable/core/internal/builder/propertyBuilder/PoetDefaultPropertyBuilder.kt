@@ -10,16 +10,20 @@ object PoetDefaultPropertyBuilder : PoetPropertyBuilder<FlowableType.Default>() 
     private const val DEFAULT_FLOW_EXTRA_BUFFER_CAPACITY = 0
     private val DEFAULT_BUFFER_OVERFLOW_STRATEGY = OnBufferOverflow.SUSPEND
 
-    override fun build(scheme: PropertyScheme<FlowableType.Default>) =
+    override fun build(
+        propertyScheme: PropertyScheme<FlowableType.Default>,
+        implClassName: String
+    ) =
         PoetSharedPropertyBuilder.build(
             PropertyScheme(
-                scheme.typeName,
-                scheme.name,
+                propertyScheme.typeName,
+                propertyScheme.name,
                 FlowableType.Shared(
                     DEFAULT_FLOW_REPLAY,
                     DEFAULT_FLOW_EXTRA_BUFFER_CAPACITY,
                     DEFAULT_BUFFER_OVERFLOW_STRATEGY
                 )
-            )
+            ),
+            implClassName
         )
 }

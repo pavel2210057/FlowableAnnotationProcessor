@@ -14,3 +14,14 @@ import me.flowable.core.Skip
 data class SingleSkipProperty(
     @Skip val prop: String
 )
+
+open class A {
+
+    open val a = 123
+
+    fun i() = object : A() {
+
+        override val a: Int
+            get() = a
+    }
+}

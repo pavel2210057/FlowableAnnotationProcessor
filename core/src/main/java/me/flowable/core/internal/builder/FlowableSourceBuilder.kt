@@ -4,6 +4,7 @@ import com.squareup.kotlinpoet.*
 import me.flowable.core.Shared
 import me.flowable.core.State
 import me.flowable.core.Skip
+import me.flowable.core.internal.builder.model.PoetPropertiesHolder
 import me.flowable.core.internal.builder.model.PoetTypeScheme
 import me.flowable.core.internal.builder.model.PropertyScheme
 import me.flowable.core.internal.builder.propertyBuilder.PoetDefaultPropertyBuilder
@@ -19,34 +20,43 @@ class FlowableSourceBuilder {
 
     private fun buildFlowableClass(classScheme: ClassScheme): FileSpec {
         val packageName = classScheme.qualifiedName.substringBeforeLast('.')
-        val className = makeFlowableClassName(
-            classScheme.qualifiedName.substringAfterLast('.')
-        )
+        val baseClassName = classScheme.qualifiedName.substringAfterLast('.')
 
-        val fileSpecBuilder = FileSpec.builder(packageName, className)
+        val interfaceName = makeFlowableInterfaceName(baseClassName)
+        val implName = makeFlowableImplName(interfaceName)
 
-        val typeSpecBuilder = TypeSpec.classBuilder(className)
-            .addModifiers(KModifier.PUBLIC)
+        val fileSpecBuilder = FileSpec.builder(packageName, interfaceName)
 
-        val typePoetScheme = PoetTypeScheme()
-        classScheme.variables.forEach { variable ->
-            val propPoetScheme = buildPropPoetScheme(variable)
+        val typePoetScheme = classScheme.variables.fold(PoetTypeScheme()) { acc, variable ->
+            val propHolder = buildPoetPropertiesHolder(variable, implName)
 
-            typePoetScheme.parameters += propPoetScheme.parameters
-            typePoetScheme.properties += propPoetScheme.properties
+            PoetTypeScheme(
+                interfaceProperties = acc.interfaceProperties + propHolder.interfaceProperty,
+                implProperties = acc.implProperties + propHolder.implProperty,
+                implParameters = propHolder.implParameter?.let { acc.implParameters + it }
+                    ?: acc.implParameters,
+                immutableProperties = acc.immutableProperties + propHolder.immutableProperty
+            )
         }
 
-        val typeSpec = buildPoetType(typeSpecBuilder, typePoetScheme)
+        val flowableInterfaceSpec = makeFlowableInterface(interfaceName)
+        val flowableImplSpec = makeFlowableImpl(implName, packageName, interfaceName,
+            typePoetScheme)
+
         return fileSpecBuilder
-            .addType(typeSpec)
+            .addType(flowableInterfaceSpec)
+            .addType(flowableImplSpec)
             .build()
     }
 
-    private fun makeFlowableClassName(initialClassName: String) = "${initialClassName}Flowable"
+    private fun makeFlowableInterfaceName(initialClassName: String) = "${initialClassName}Flowable"
 
-    private fun buildPropPoetScheme(
-        variable: Variable
-    ): PoetTypeScheme {
+    private fun makeFlowableImplName(interfaceName: String) = "${interfaceName}Impl"
+
+    private fun buildPoetPropertiesHolder(
+        variable: Variable,
+        implClassName: String
+    ): PoetPropertiesHolder {
         val flowableType = mapFlowableAnnotationToFlowableType(variable.flowableAnnotation)
         val scheme = PropertyScheme(
             variable.typeName,
@@ -54,7 +64,7 @@ class FlowableSourceBuilder {
             flowableType
         )
 
-        return buildPropPoetScheme(scheme)
+        return buildPoetPropertiesHolder(scheme, implClassName)
     }
 
     private fun mapFlowableAnnotationToFlowableType(flowableAnnotation: Annotation?): FlowableType {
@@ -74,22 +84,70 @@ class FlowableSourceBuilder {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun<T : FlowableType> buildPropPoetScheme(
-        propertyScheme: PropertyScheme<T>
+    private fun<T : FlowableType> buildPoetPropertiesHolder(
+        propertyScheme: PropertyScheme<T>,
+        implClassName: String
     ) = when (propertyScheme.type) {
-        FlowableType.Default -> PoetDefaultPropertyBuilder.build(propertyScheme as PropertyScheme<FlowableType.Default>)
-        FlowableType.State -> PoetStatePropertyBuilder.build(propertyScheme as PropertyScheme<FlowableType.State>)
-        is FlowableType.Shared -> PoetSharedPropertyBuilder.build(propertyScheme as PropertyScheme<FlowableType.Shared>)
-        FlowableType.Transient -> PoetTransientPropertyBuilder.build(propertyScheme as PropertyScheme<FlowableType.Transient>)
+        FlowableType.Default -> PoetDefaultPropertyBuilder
+            .build(propertyScheme as PropertyScheme<FlowableType.Default>, implClassName)
+
+        FlowableType.State -> PoetStatePropertyBuilder
+            .build(propertyScheme as PropertyScheme<FlowableType.State>, implClassName)
+
+        is FlowableType.Shared -> PoetSharedPropertyBuilder
+            .build(propertyScheme as PropertyScheme<FlowableType.Shared>, implClassName)
+
+        FlowableType.Transient -> PoetTransientPropertyBuilder
+            .build(propertyScheme as PropertyScheme<FlowableType.Transient>, implClassName)
+
         else -> throw error("Unexpected behavior!")
     }
 
-    private fun buildPoetType(typeSpecBuilder: TypeSpec.Builder, poetTypeScheme: PoetTypeScheme) =
-        typeSpecBuilder.primaryConstructor(
-            FunSpec.constructorBuilder()
-                .addParameters(poetTypeScheme.parameters)
-                .build()
-        )
-            .addProperties(poetTypeScheme.properties)
+    private fun makeFlowableInterface(name: String) =
+        TypeSpec.interfaceBuilder(name)
+            .addModifiers(KModifier.PUBLIC)
             .build()
+
+    private fun makeFlowableImpl(
+        name: String,
+        interfacePackage: String,
+        interfaceName: String,
+        poetTypeScheme: PoetTypeScheme
+    ): TypeSpec {
+        val interfaceTypeName = ClassName(interfacePackage, interfaceName)
+
+        return TypeSpec.classBuilder(name)
+            .addModifiers(KModifier.PUBLIC)
+            .addSuperinterface(interfaceTypeName)
+            .primaryConstructor(
+                FunSpec.constructorBuilder()
+                    .addParameters(poetTypeScheme.implParameters)
+                    .build()
+            )
+            .addProperties(poetTypeScheme.implProperties)
+            .addFunction(
+                FunSpec.builder(IMMUTABLE_FUN_NAME)
+                    .addModifiers(KModifier.PUBLIC)
+                    .returns(interfaceTypeName)
+                    .addStatement("return %L", makeFlowableImmutable(
+                        interfaceTypeName,
+                        poetTypeScheme.immutableProperties
+                    ))
+                    .build()
+            )
+            .build()
+    }
+
+    private fun makeFlowableImmutable(
+        interfaceTypeName: TypeName,
+        immutableProperties: List<PropertySpec>
+    ) =
+        TypeSpec.anonymousClassBuilder()
+            .addSuperinterface(interfaceTypeName)
+            .addProperties(immutableProperties)
+            .build()
+
+    companion object {
+        private const val IMMUTABLE_FUN_NAME = "immutable"
+    }
 }
