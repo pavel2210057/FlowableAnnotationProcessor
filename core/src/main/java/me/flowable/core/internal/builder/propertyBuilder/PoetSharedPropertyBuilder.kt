@@ -2,6 +2,7 @@ package me.flowable.core.internal.builder.propertyBuilder
 
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import kotlinx.coroutines.channels.BufferOverflow
@@ -34,7 +35,7 @@ object PoetSharedPropertyBuilder : PoetPropertyBuilder<FlowableType.Shared>() {
         val basePropertyBuilder = makeBasePropertyBuilder(propName, poetTypeName)
         val interfaceProperty = basePropertyBuilder.makeInterfaceProperty()
         val implProperty = makeImplProperty(propName, poetTypeName, propertyScheme.type)
-        val immutableProperty = implProperty.makeImmutableProperty(implClassName.name)
+        val immutableProperty = interfaceProperty.makeImmutableProperty(implClassName)
 
         return PoetPropertiesHolder(
             interfaceProperty = interfaceProperty,
@@ -55,16 +56,19 @@ object PoetSharedPropertyBuilder : PoetPropertyBuilder<FlowableType.Shared>() {
         type: FlowableType.Shared
     ) =
         PropertySpec.builder(name, makeTypeNameImpl(poetTypeName))
+            .addModifiers(KModifier.OVERRIDE, KModifier.PUBLIC)
             .initializeSharedFlowPropImpl(type)
             .build()
 
     private fun PropertySpec.makeImmutableProperty(
         implClassName: String
-    ) = toBuilder().getter(
-        FunSpec.getterBuilder()
-            .addCode("return this@%L.%L", implClassName, name)
-            .build()
-    ).build()
+    ) = toBuilder()
+        .addModifiers(KModifier.OVERRIDE)
+        .getter(
+            FunSpec.getterBuilder()
+                .addCode("return this@%L.%L", implClassName, name)
+                .build()
+        ).build()
 
     private fun makeBaseTypeName(initialTypeName: PoetTypeName): PoetTypeName {
         val flowClassName = ClassName(

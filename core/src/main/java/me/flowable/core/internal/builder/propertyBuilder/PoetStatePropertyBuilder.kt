@@ -1,10 +1,7 @@
 package me.flowable.core.internal.builder.propertyBuilder
 
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import me.flowable.core.internal.builder.FlowableType
@@ -29,15 +26,15 @@ object PoetStatePropertyBuilder : PoetPropertyBuilder<FlowableType.State>() {
     ): PoetPropertiesHolder {
         val poetTypeName = propertyScheme.typeName.accept(typeNameVisitor)
         val initialParamName = makeInitialParamName(propertyScheme.name)
-        val propName = makePropName(initialParamName)
+        val propName = makePropName(propertyScheme.name)
 
-        val baseParameterBuilder = makeBaseParameterBuilder(propName, poetTypeName)
+        val baseParameterBuilder = makeBaseParameterBuilder(initialParamName, poetTypeName)
         val implParameter = baseParameterBuilder.makeImplParameter()
 
         val basePropertyBuilder = makeBasePropertyBuilder(propName, poetTypeName)
         val interfaceProperty = basePropertyBuilder.makeInterfaceProperty()
         val implProperty = makeImplProperty(propName, poetTypeName, implParameter)
-        val immutableProperty = implProperty.makeImmutableProperty(implClassName.name)
+        val immutableProperty = interfaceProperty.makeImmutableProperty(implClassName)
 
         return PoetPropertiesHolder(
             interfaceProperty = interfaceProperty,
@@ -62,22 +59,25 @@ object PoetStatePropertyBuilder : PoetPropertyBuilder<FlowableType.State>() {
         poetTypeName: PoetTypeName,
         parameterSpec: ParameterSpec
     ) = PropertySpec.builder(name, makeImplPropTypeName(poetTypeName))
+        .addModifiers(KModifier.OVERRIDE, KModifier.PUBLIC)
         .initializeStateFlowPropImpl(parameterSpec.name)
         .build()
 
     private fun PropertySpec.makeImmutableProperty(
         implClassName: String
-    ) = toBuilder().getter(
-        FunSpec.getterBuilder()
-            .addCode("return this@%L.%L", implClassName, name)
-            .build()
-    ).build()
-
-    private fun makeInitialParamName(initialPropName: String) =
-        "initial${initialPropName.uppercaseFirstChar()}State"
+    ) = toBuilder()
+        .addModifiers(KModifier.OVERRIDE)
+        .getter(
+            FunSpec.getterBuilder()
+                .addCode("return this@%L.%L", implClassName, name)
+                .build()
+        ).build()
 
     private fun PropertySpec.Builder.initializeStateFlowPropImpl(initialParamName: String) =
         initializer("%T(%N)", MUTABLE_STATE_FLOW_TYPE, initialParamName)
+
+    private fun makeInitialParamName(initialPropName: String) =
+        "initial${initialPropName.uppercaseFirstChar()}State"
 
     private fun makePropName(initialPropName: String) = "${initialPropName}StateFlow"
 

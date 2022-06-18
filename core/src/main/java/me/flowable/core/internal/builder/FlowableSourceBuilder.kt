@@ -39,7 +39,8 @@ class FlowableSourceBuilder {
             )
         }
 
-        val flowableInterfaceSpec = makeFlowableInterface(interfaceName)
+        val flowableInterfaceSpec = makeFlowableInterface(packageName, interfaceName,
+            typePoetScheme.interfaceProperties, implName, typePoetScheme.implParameters)
         val flowableImplSpec = makeFlowableImpl(implName, packageName, interfaceName,
             typePoetScheme)
 
@@ -103,9 +104,42 @@ class FlowableSourceBuilder {
         else -> throw error("Unexpected behavior!")
     }
 
-    private fun makeFlowableInterface(name: String) =
+    private fun makeFlowableInterface(
+        packageName: String,
+        name: String,
+        interfaceProperties: List<PropertySpec>,
+        implClassName: String,
+        implParameters: List<ParameterSpec>
+    ) =
         TypeSpec.interfaceBuilder(name)
             .addModifiers(KModifier.PUBLIC)
+            .addProperties(interfaceProperties)
+            .addType(
+                makeFlowableInterfaceCompanion(
+                    ClassName(packageName, name),
+                    implClassName,
+                    implParameters
+                )
+            )
+            .build()
+
+    private fun makeFlowableInterfaceCompanion(
+        interfaceTypeName: TypeName,
+        implClassName: String,
+        implClassParameters: List<ParameterSpec>
+    ) =
+        TypeSpec.companionObjectBuilder()
+            .addFunction(
+                FunSpec.builder(INVOKE_FUN_NAME)
+                    .addModifiers(KModifier.PUBLIC, KModifier.OPERATOR)
+                    .addParameters(implClassParameters)
+                    .addCode("return %L(", implClassName)
+                    .apply {
+                        implClassParameters.forEach { addCode("%N", it) }
+                    }
+                    .addCode(")")
+                    .build()
+            )
             .build()
 
     private fun makeFlowableImpl(
@@ -128,7 +162,6 @@ class FlowableSourceBuilder {
             .addFunction(
                 FunSpec.builder(IMMUTABLE_FUN_NAME)
                     .addModifiers(KModifier.PUBLIC)
-                    .returns(interfaceTypeName)
                     .addStatement("return %L", makeFlowableImmutable(
                         interfaceTypeName,
                         poetTypeScheme.immutableProperties
@@ -149,5 +182,6 @@ class FlowableSourceBuilder {
 
     companion object {
         private const val IMMUTABLE_FUN_NAME = "immutable"
+        private const val INVOKE_FUN_NAME = "invoke"
     }
 }

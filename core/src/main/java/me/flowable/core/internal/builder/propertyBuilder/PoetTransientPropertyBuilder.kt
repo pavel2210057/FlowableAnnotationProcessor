@@ -1,9 +1,6 @@
 package me.flowable.core.internal.builder.propertyBuilder
 
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.ParameterSpec
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.*
 import me.flowable.core.internal.builder.FlowableType
 import me.flowable.core.internal.builder.model.PoetPropertiesHolder
 import me.flowable.core.internal.builder.model.PropertyScheme
@@ -19,7 +16,7 @@ object PoetTransientPropertyBuilder : PoetPropertyBuilder<FlowableType.Transient
         val baseProperty = makeBasePropertyBuilder(propertyScheme.name, poetTypeName)
         val interfaceProperty = baseProperty.makeInterfaceProperty()
         val implProperty = interfaceProperty.makeImplProperty()
-        val immutableProperty = implProperty.makeImmutableProperty(implClassName.name)
+        val immutableProperty = interfaceProperty.makeImmutableProperty(implClassName)
 
         val baseParameter = makeBaseParameterBuilder(propertyScheme.name, poetTypeName)
         val implParameter = baseParameter.makeImplParameter()
@@ -42,13 +39,18 @@ object PoetTransientPropertyBuilder : PoetPropertyBuilder<FlowableType.Transient
 
     private fun PropertySpec.Builder.makeInterfaceProperty() = build()
 
-    private fun PropertySpec.makeImplProperty() = toBuilder().initializer(name).build()
+    private fun PropertySpec.makeImplProperty() = toBuilder()
+        .addModifiers(KModifier.OVERRIDE, KModifier.PUBLIC)
+        .initializer(name)
+        .build()
 
     private fun PropertySpec.makeImmutableProperty(
         implClassName: String
-    ) = toBuilder().getter(
-        FunSpec.getterBuilder()
-            .addCode("return this@%T.%L", implClassName, name)
-            .build()
-    ).build()
+    ) = toBuilder()
+        .addModifiers(KModifier.OVERRIDE)
+        .getter(
+            FunSpec.getterBuilder()
+                .addCode("return this@%L.%L", implClassName, name)
+                .build()
+        ).build()
 }

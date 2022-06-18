@@ -1,5 +1,18 @@
 plugins {
     kotlin("jvm")
+    `maven-publish`
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "me.flowable"
+            artifactId = "core"
+            version = "1.1.1"
+
+            from(components["java"])
+        }
+    }
 }
 
 dependencies {
