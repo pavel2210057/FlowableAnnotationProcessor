@@ -135,7 +135,7 @@ class FlowableSourceBuilder {
                     .addParameters(implClassParameters)
                     .addCode("return %L(", implClassName)
                     .apply {
-                        implClassParameters.forEach { addCode("%N", it) }
+                        implClassParameters.forEach { addCode("%N, ", it) }
                     }
                     .addCode(")")
                     .build()
